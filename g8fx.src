@@ -1,0 +1,106 @@
+gfx={}
+  gfx.screen_buffer={}
+    gfx.screen_buffer.buffer = []
+    gfx.screen_buffer.clear=function()
+      self.buffer=[]
+      end function
+    gfx.screen_buffer.push=function(text)
+      self.buffer.push(text)
+      end function
+    gfx.screen_buffer.out=function()
+      out=""
+      for line in self.buffer
+        out=out+line+char(10)
+      end for
+      return out
+      end function
+
+  gfx.scene={}
+    gfx.scene.id=null
+    gfx.scene.alias=null
+    gfx.scene.data=null
+    gfx.scene.sceneWidth=40
+    gfx.scene.pxSize=19.05
+    gfx.scene.borderColor="FFFFFF"
+    gfx.scene.textColor="FFFFFF"
+    gfx.scene.screen_buffer=null
+    gfx.scene.init = function()
+      self.screen_buffer=new gfx.screen_buffer
+      self.screen_buffer.clear
+      end function
+    gfx.scene.add_line=function(length=null, borderColor=null)
+      border_color=self.borderColor
+      if borderColor!=null then border_color=borderColor
+      if length==null then length=self.sceneWidth
+      self.screen_buffer.push("<size="+self.pxSize+"px>"+(("<sprite=0 color=#"+border_color+"> ")*length))
+      end function
+    gfx.scene.add_text=function(text, just="l", bordered=true, textColor=null, borderColor=null)
+      border_color=self.borderColor
+      text_color=self.textColor
+      padd_left=0
+      padd_right=0
+      if borderColor!=null then border_color=borderColor
+      if textColor!=null then text_color=textColor
+      if bordered then
+        line="<size="+self.pxSize+"px><color=#"+text_color+"><sprite=0 color=#"+border_color+">"
+      else
+        line="<size="+self.pxSize+"px><color=#"+text_color+">"
+      end if
+      if just=="l"then
+        if bordered then
+          padd_left=1
+          padd_right=self.sceneWidth-text.len-3
+        end if
+      else if just=="c"then
+        padd=abs((self.sceneWidth-text.len)/2)
+        if bordered then padd=padd-2
+        if (text.len%2) ==0 and bordered==true then padd_left=3 else padd_left=4
+        if bordered==false then padd_left=padd_left-4
+        padd_left=padd_left+padd
+        padd_right=padd_right+padd
+      else if just=="r"then
+        padd=self.sceneWidth-text.len
+        if bordered then padd = padd -3
+        padd_left=padd
+        padd_right=padd+1
+      end if
+      line=line+(" "*padd_left)+text+(" "*padd_right)
+      if bordered then line=line+"<size="+self.pxSize+"px><sprite=0 color=#"+border_color+"> "
+      self.screen_buffer.push(line)
+      end function
+
+    gfx.scene.render=function()
+      clear_screen
+      print(self.screen_buffer.out)
+      end function
+    gfx.scene.add_header=function(text,bordered=true, textColor=null, borderColor=null)
+      border_color=self.borderColor
+      text_color=self.textColor
+      if borderColor!=null then border_color=borderColor
+      if textColor!=null then text_color=textColor
+      header_text=text.split("\n")
+      if header_text.len==1 then header_text=text.split("\\n")
+      if bordered then self.add_line(self.sceneWidth,border_color)
+      for line in header_text
+        self.add_text(line, "c", bordered,text_color,border_color)
+      end for
+      if bordered then self.add_line(self.sceneWidth,border_color)
+      end function
+    gfx.scene.add_menu=function(options, sx=":",just="l",bordered=true, textColor=null, borderColor=null)
+      border_color=self.borderColor
+      text_color=self.textColor
+        if borderColor!=null then border_color=borderColor
+        if textColor!=null then text_color=textColor
+      for i in range(0,options.len-1)
+        self.add_text(" "+(i+1)+sx+" "+options[i], just, bordered, text_color, border_color)
+      end for
+      self.add_line(borderColor)
+      end function
+  gfx.scenes={}
+
+  gfx.createScene=function(names)
+    mscene = new gfx.scene
+    mscene.init
+    self.scenes[names]=mscene
+    return @self.scenes[names]
+    end function
